@@ -7,10 +7,10 @@ FROM node:20-alpine
 # -S creates a system user
 # -G adds the user to a group
 
-RUN addgroup app && adduser -S -G app app
+#RUN addgroup app && adduser -S -G app app
 
 # set user to run the application
-USER app
+USER root
 
 # set our working directory to app
 WORKDIR /app
@@ -22,15 +22,15 @@ COPY package*.json ./
 # Ensure appropriate permissions available in cwd to run package files
 # change user root and update permissions
 
-USER root
+#USER root
 
 # change ownership of /app directory to the app user
 # chown -R <user>:<group> directory 
-RUN chown -R app:app .
+#RUN chown -R app:app /app
 
 # change the user back to app user
 
-USER app
+#USER app
 
 # install deps
 RUN npm install
