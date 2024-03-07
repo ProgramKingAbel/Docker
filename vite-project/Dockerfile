@@ -1,38 +1,45 @@
-# syntax=docker/dockerfile:1
+# set the base image to use
 
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/go/dockerfile-reference/
+FROM node:20-alpine
 
-# Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
+#optional but recommended to avoid running app as root to cripple the system
+# for security, create a non-root user whose permissions is to only run the application
+# -S creates a system user
+# -G adds the user to a group
 
-ARG NODE_VERSION=18.19.0
+RUN addgroup app && adduser -S -G app app
 
-FROM node:${NODE_VERSION}-alpine
+# set user to run the application
+USER app
 
-# Use production node environment by default.
-ENV NODE_ENV production
+# set our working directory to app
+WORKDIR /app
 
+# utilize dockers cache to saved deps by copying package.json and package-lock.json files to ./ first
 
-WORKDIR /usr/src/app
+COPY package*.json ./
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.npm to speed up subsequent builds.
-# Leverage a bind mounts to package.json and package-lock.json to avoid having to copy them into
-# into this layer.
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev
+# Ensure appropriate permissions available in cwd to run package files
+# change user root and update permissions
 
-# Run the application as a non-root user.
-USER node
+USER root
 
-# Copy the rest of the source files into the image.
+# change ownership of /app directory to the app user
+# chown -R <user>:<group> directory 
+RUN chown -R app:app .
+
+# change the user back to app user
+
+#USER app
+
+# install deps
+RUN npm install
+
+#copy the rest of the files to the working directory
+
 COPY . .
 
-# Expose the port that the application listens on.
+# expose port to tell Docker that the container listens to on the specified network 5173
 EXPOSE 5173
 
-# Run the application.
 CMD npm run dev
